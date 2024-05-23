@@ -1,0 +1,40 @@
+[project]
+name = "mediahash"
+version = "0.1.0"
+description = "Perceptual hashing and deduplication for media"
+authors = [
+    {name = "Paul Hutchings", email = "dev@studiop.page"},
+]
+dependencies = [
+    "av>=12.0.0",
+    "imagehash>=4.3.1",
+    "scipy>=1.13.1",
+    "numpy>=1.26.4",
+    "pywavelets>=1.6.0",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "GPL3.0"}
+
+[project.optional-dependencies]
+avif = [
+    "pillow-avif-plugin>=1.4.3",
+]
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "black>=24.4.2",
+    "pylint>=3.2.2",
+    "isort>=5.13.2",
+    "mypy>=1.10.0",
+]
+test = [
+    "pytest>=8.2.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["__test__"]
+addopts = ["--import-mode=importlib"]
