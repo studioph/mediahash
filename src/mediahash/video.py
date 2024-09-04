@@ -1,27 +1,22 @@
-from dataclasses import dataclass
 import hashlib
 import logging
+from dataclasses import dataclass
 from typing import IO, Iterable, Protocol
-from typing_extensions import Buffer
 
 import av
+import context_utils
 import numpy as np
 import pywt
 from av.error import InvalidDataError  # pylint: disable=no-name-in-module
+from av.stream import Stream  # pylint: disable=no-name-in-module
 from scipy.spatial import distance
-from av.stream import Stream
-
-from .util import reraise
+from typing_extensions import Buffer
 
 from .types import MediaError, MediaFingerprint
 
 LOG = logging.getLogger(__name__)
 
-FRAME_THRESHOLD = 1000
-HASH_SIZE = 8
 MILLIS_PER_SECOND = 1_000_000
-CHUNK_SIZE = 1024 * 64
-FP_DECIMAL_PLACES = 4
 
 extensions = (
     ".mp4",
@@ -37,11 +32,12 @@ extensions = (
     ".mpg",
 )
 
-rethrow = reraise(InvalidDataError, as_=MediaError)
+rethrow = context_utils.rethrow(InvalidDataError, as_=MediaError)
+
 
 class HashObj(Protocol):
-    def update(self, __data: Buffer):
-        ...
+    def update(self, __data: Buffer): ...
+
 
 @dataclass(frozen=True, kw_only=True)
 class VideoInfo:
@@ -51,15 +47,18 @@ class VideoInfo:
     length: int
     bitrate: int
 
+
 class VideoFingerprint:
-    def __init__(self, vhash: np.ndarray):
+    def __init__(self, vhash: np.ndarray, precision=4):
         self._fp = vhash
+        self.precision = precision
 
     def __sub__(self, other: np.ndarray) -> float:
-        return round(distance.cosine(self._fp, other), FP_DECIMAL_PLACES)
+        return round(distance.cosine(self._fp, other), self.precision)
 
     def __bytes__(self) -> bytes:
         return self._fp.tobytes()
+
 
 @staticmethod
 @rethrow
@@ -75,13 +74,6 @@ def analyze(media: IO) -> VideoInfo:
             width=vidstream.width,
             height=vidstream.height,
         )
-    
-def _estimate_stream_size(stream: Stream) -> int:
-    if not stream.codec_context.bit_rate:
-        return 0
-    seconds = float(stream.duration * stream.time_base) if stream.duration else stream.container.duration / 1_000_000
-    size_bits = stream.codec_context.bit_rate * seconds
-    return round(size_bits / 8)
 
 
 def _read_from_packets(packets: Iterable, amount: int, digest: HashObj):
@@ -96,17 +88,19 @@ def _read_from_packets(packets: Iterable, amount: int, digest: HashObj):
         read += to_read
     assert read == amount
 
+
 @staticmethod
 @rethrow
-def mhash(media: IO) -> bytes:
+def mhash(media: IO, chunk_size=64 * 1024) -> bytes:
     with av.open(media) as container:
         chksm = hashlib.md5()
         # Set up packet generator to ignore empty packets
         packets = (p for p in container.demux(video=0) if p.pos)
-        _read_from_packets(packets, CHUNK_SIZE, chksm)
+        _read_from_packets(packets, chunk_size, chksm)
         container.seek(container.duration // 2)
-        _read_from_packets(packets, CHUNK_SIZE, chksm)
+        _read_from_packets(packets, chunk_size, chksm)
     return chksm.digest()
+
 
 @staticmethod
 @rethrow
@@ -119,16 +113,17 @@ def checksum(media: IO) -> bytes:
             chksm.update(packet)
     return chksm.digest()
 
+
 @staticmethod
 @rethrow
-def fingerprint(media: IO) -> MediaFingerprint:
+def fingerprint(media: IO, frame_threshold=1000, hash_size=8) -> MediaFingerprint:
     LOG.debug("Fingerprinting %s", media.name)
     with av.open(media, mode="r") as container:
         instream = container.streams.video[0]
-        if instream.frames > FRAME_THRESHOLD:
+        if instream.frames > frame_threshold:
             LOG.debug("Number of frames exceeds threshold, using only keyframes")
             instream.codec_context.skip_frame = "NONKEY"
-        scaled_size = HASH_SIZE * HASH_SIZE
+        scaled_size = hash_size * hash_size
 
         graph = av.filter.Graph()
         _link_nodes(
@@ -140,11 +135,11 @@ def fingerprint(media: IO) -> MediaFingerprint:
         )
         graph.configure()
 
-        hashes = np.zeros((HASH_SIZE, HASH_SIZE), dtype=np.float32)
+        hashes = np.zeros((hash_size, hash_size), dtype=np.float32)
         for inframe in container.decode(instream):
             graph.push(inframe)
             outframe = graph.pull()
-            hash_vector = _whash(outframe.to_ndarray(), hash_size=HASH_SIZE)
+            hash_vector = _whash(outframe.to_ndarray(), hash_size=hash_size)
             hashes += hash_vector
     return VideoFingerprint(hashes)
 
@@ -155,7 +150,7 @@ def _link_nodes(*nodes):
 
 
 def _whash(
-    frame, hash_size, image_scale=None, mode="haar", remove_max_haar_ll=True
+    frame, hash_size: int, image_scale=None, mode="haar", remove_max_haar_ll=True
 ) -> np.ndarray:
     """Calculates the wavlet hash of a video frame. Based on https://github.com/JohannesBuchner/imagehash whash"""
 

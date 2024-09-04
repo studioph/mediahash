@@ -22,7 +22,7 @@ class MediaImpl(Protocol):
     extensions: Collection[str]
 
     @abstractmethod
-    def analyze(self, media: IO):
+    def analyze(self, media: IO) -> object:
         ...
 
     @abstractmethod
