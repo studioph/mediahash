@@ -11,8 +11,9 @@ dependencies = [
     "scipy>=1.13.1",
     "numpy>=1.26.4",
     "pywavelets>=1.6.0",
+    "context-utils @ file:///${PROJECT_ROOT}/../context-utils",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "GPL3.0"}
 
@@ -34,6 +35,9 @@ dev = [
 test = [
     "pytest>=8.2.1",
 ]
+
+[tool.isort]
+profile = "black"
 
 [tool.pytest.ini_options]
 testpaths = ["__test__"]
