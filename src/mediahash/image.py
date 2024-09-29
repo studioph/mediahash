@@ -29,6 +29,7 @@ class ImageInfo:
     width: int
     height: int
     size: int
+    format: str
 
 
 class ImageFingerprint:
@@ -48,7 +49,9 @@ def analyze(media: IO) -> ImageInfo:
     LOG.debug("Analyzing %s", media.name)
     with Image.open(media) as img:
         media.seek(0, os.SEEK_END)
-        return ImageInfo(size=media.tell(), width=img.width, height=img.height)
+        return ImageInfo(
+            size=media.tell(), width=img.width, height=img.height, format=img.format
+        )
 
 
 @staticmethod

@@ -14,7 +14,7 @@ TEST_DATA_FOLDER = pathlib.Path(__file__).parent / "data"
     [
         (
             TEST_DATA_FOLDER / "frame.jpg",
-            image.ImageInfo(size=93722, width=1280, height=720),
+            image.ImageInfo(size=93722, width=1280, height=720, format="JPEG"),
         )
     ],
 )

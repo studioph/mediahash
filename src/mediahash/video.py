@@ -46,6 +46,7 @@ class VideoInfo:
     size: int
     length: int
     bitrate: int
+    format: str
 
 
 class VideoFingerprint:
@@ -73,7 +74,7 @@ def analyze(media: IO) -> VideoInfo:
             bitrate=container.bit_rate,
             width=vidstream.width,
             height=vidstream.height,
-            format=media.name,
+            format=container.format.name,
         )
 
 
