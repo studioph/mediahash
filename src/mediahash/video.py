@@ -1,14 +1,14 @@
 import hashlib
 import logging
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import IO, Iterable, Protocol
+from typing import IO, Protocol
 
 import av
 import context_utils
 import numpy as np
 import pywt
 from av.error import InvalidDataError  # pylint: disable=no-name-in-module
-from av.stream import Stream  # pylint: disable=no-name-in-module
 from scipy.spatial import distance
 from typing_extensions import Buffer
 
@@ -35,7 +35,7 @@ extensions = (
 rethrow = context_utils.rethrow(InvalidDataError, as_=MediaError)
 
 
-class HashObj(Protocol):
+class __HashObj(Protocol):
     def update(self, __data: Buffer): ...
 
 
@@ -73,10 +73,11 @@ def analyze(media: IO) -> VideoInfo:
             bitrate=container.bit_rate,
             width=vidstream.width,
             height=vidstream.height,
+            format=media.name,
         )
 
 
-def _read_from_packets(packets: Iterable, amount: int, digest: HashObj):
+def _read_from_packets(packets: Iterable, amount: int, digest: __HashObj):
     """Reads a fixed amount of data from media stream packets"""
     read = 0
     while read < amount:
