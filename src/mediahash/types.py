@@ -25,9 +25,6 @@ class MediaImpl(Protocol):
     def checksum(self, media: IO) -> bytes: ...
 
     @abstractmethod
-    def mhash(self, media: IO) -> bytes: ...
-
-    @abstractmethod
     def fingerprint(self, media: IO) -> MediaFingerprint: ...
 
     @abstractmethod

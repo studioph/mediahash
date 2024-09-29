@@ -63,9 +63,6 @@ def checksum(media: IO) -> bytes:
     return hash_.digest()
 
 
-mhash = checksum
-
-
 @staticmethod
 @rethrow
 def fingerprint(media: IO) -> MediaFingerprint:

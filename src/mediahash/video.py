@@ -93,7 +93,7 @@ def _read_from_packets(packets: Iterable, amount: int, digest: __HashObj):
 
 @staticmethod
 @rethrow
-def mhash(media: IO, chunk_size=64 * 1024) -> bytes:
+def checksum(media: IO, chunk_size=64 * 1024) -> bytes:
     with av.open(media) as container:
         chksm = hashlib.md5()
         # Set up packet generator to ignore empty packets
@@ -101,18 +101,6 @@ def mhash(media: IO, chunk_size=64 * 1024) -> bytes:
         _read_from_packets(packets, chunk_size, chksm)
         container.seek(container.duration // 2)
         _read_from_packets(packets, chunk_size, chksm)
-    return chksm.digest()
-
-
-@staticmethod
-@rethrow
-def checksum(media: IO) -> bytes:
-    with av.open(media) as container:
-        chksm = hashlib.md5()
-        # Set up packet generator to ignore empty packets
-        packets = (p for p in container.demux() if p.pos)
-        for packet in packets:
-            chksm.update(packet)
     return chksm.digest()
 
 
