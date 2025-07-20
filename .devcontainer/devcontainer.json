@@ -1,0 +1,44 @@
+{
+    "name": "mediahash",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "username": "devuser",
+            "userUid": "1000",
+            "userGid": "1000",
+            "upgradePackages": false,
+            "installOhMyZshConfig": false,
+            "installOhMyZsh": false,
+            "installZsh": false
+        }
+    },
+    "customizations": {
+        "vscodium": {
+            "extensions": [
+                "tamasfe.even-better-toml@0.19.1",
+                "eamodio.gitlens",
+                "detachhead.basedpyright",
+                "ms-python.black-formatter",
+                "ms-python.isort",
+                "ms-python.pylint",
+                "ms-python.python",
+                "mechatroner.rainbow-csv"
+            ]
+        }
+    },
+    "remoteUser": "devuser",
+    "mounts": [
+        {
+            "type": "bind",
+            "source": "${localEnv:HOME}/.config/VSCodium/User/settings.json",
+            "target": "/home/devuser/.config/VSCodium/User/settings.json"
+        },
+        {
+            "type": "bind",
+            "source": "${localEnv:HOME}/dev/context-utils",
+            "target": "/workspaces/context-utils"
+        }
+    ]
+}
