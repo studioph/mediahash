@@ -2,14 +2,13 @@ from abc import abstractmethod
 from collections.abc import Collection
 from typing import IO, Protocol
 
-
 class MediaError(Exception):
     """Aggregate error for different media types"""
 
 
 class MediaFingerprint(Protocol):
     @abstractmethod
-    def __sub__(self, other) -> int | float: ...
+    def __sub__(self, other: "MediaFingerprint") -> int | float: ...
 
     @abstractmethod
     def __bytes__(self) -> bytes: ...

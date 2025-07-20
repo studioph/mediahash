@@ -2,6 +2,7 @@ import hashlib
 import logging
 from collections.abc import Iterable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import IO, Protocol
 
 import av
@@ -54,8 +55,8 @@ class VideoFingerprint:
         self._fp = vhash
         self.precision = precision
 
-    def __sub__(self, other: np.ndarray) -> float:
-        return round(distance.cosine(self._fp, other), self.precision)
+    def __sub__(self, other: "VideoFingerprint") -> float:
+        return round(distance.cosine(self._fp, other._fp), self.precision)
 
     def __bytes__(self) -> bytes:
         return self._fp.tobytes()
@@ -176,3 +177,11 @@ def _whash(
 def parse_fingerprint(__bytes: bytes) -> MediaFingerprint:
     arr = np.frombuffer(__bytes, dtype=np.float32)
     return VideoFingerprint(arr)
+
+@dataclass(frozen=True, kw_only=True)
+class Video:
+    name: str
+    path: Path
+    info: VideoInfo
+    checksum: bytes
+    fingerprint: VideoFingerprint

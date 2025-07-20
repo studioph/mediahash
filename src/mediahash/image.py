@@ -2,6 +2,7 @@ import hashlib
 import logging
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import IO
 
 import imagehash
@@ -36,8 +37,8 @@ class ImageFingerprint:
     def __init__(self, ihash: ImageHash):
         self._fp = ihash
 
-    def __sub__(self, other: ImageHash) -> int:
-        return self._fp - other
+    def __sub__(self, other: "ImageFingerprint") -> int:
+        return self._fp - other._fp
 
     def __bytes__(self) -> bytes:
         return self._fp.hash.tobytes()
@@ -76,3 +77,12 @@ def fingerprint(media: IO) -> MediaFingerprint:
 def parse_fingerprint(__bytes: bytes) -> MediaFingerprint:
     arr = np.frombuffer(__bytes, dtype=np.uint8)
     return ImageFingerprint(ImageHash(arr))
+
+
+@dataclass(frozen=True, kw_only=True)
+class Image:
+    name: str
+    path: Path
+    info: ImageInfo
+    checksum: bytes
+    fingerprint: ImageFingerprint
